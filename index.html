@@ -3,81 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Пошаговая RPG</title>
+    <title>Змейка</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #fafafa;
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
+            background-color: #fafafa;
         }
-        #game {
-            width: 400px;
-            height: 400px;
-            background-color: #fff;
-            border: 2px solid #000;
-            display: grid;
-            grid-template-columns: repeat(10, 1fr);
-            grid-template-rows: repeat(10, 1fr);
-            gap: 1px;
-        }
-        .tile {
-            width: 40px;
-            height: 40px;
-            background-color: #ddd;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .player {
-            background-color: blue;
-        }
-        .enemy {
-            background-color: red;
+        canvas {
+            background-color: #000;
+            display: block;
         }
     </style>
 </head>
 <body>
-    <h1>Пошаговая RPG</h1>
-    <div id="game"></div>
-    <button id="nextTurn">Следующий ход</button>
-
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    
     <script>
-        const game = document.getElementById('game');
-        const playerPosition = { x: 0, y: 0 };
-        const enemyPosition = { x: 9, y: 9 };
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
 
-        function drawGame() {
-            game.innerHTML = '';
-            for (let y = 0; y < 10; y++) {
-                for (let x = 0; x < 10; x++) {
-                    const tile = document.createElement('div');
-                    tile.classList.add('tile');
-                    if (x === playerPosition.x && y === playerPosition.y) {
-                        tile.classList.add('player');
-                    }
-                    if (x === enemyPosition.x && y === enemyPosition.y) {
-                        tile.classList.add('enemy');
-                    }
-                    game.appendChild(tile);
+        let snake = [{x: 10, y: 10}];
+        let apple = {x: 5, y: 5};
+        let direction = {x: 1, y: 0}; // Начальное движение вправо
+        let score = 0;
+
+        function drawTile(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x * gridSize, y * gridSize, gridSize - 2, gridSize - 2);
+        }
+
+        function moveSnake() {
+            const head = {x: snake[0].x + direction.x, y: snake[0].y + direction.y};
+
+            // Проверка на выход за границы
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                resetGame();
+            }
+
+            // Проверка на столкновение с собой
+            for (let part of snake) {
+                if (head.x === part.x && head.y === part.y) {
+                    resetGame();
                 }
+            }
+
+            snake.unshift(head);
+
+            // Если съедена яблоко
+            if (head.x === apple.x && head.y === apple.y) {
+                score++;
+                placeApple();
+            } else {
+                snake.pop(); // Убираем последний сегмент
             }
         }
 
-        function nextTurn() {
-            // Простейшая логика для передвижения
-            playerPosition.x = Math.min(playerPosition.x + 1, 9);
-            drawGame();
+        function placeApple() {
+            apple.x = Math.floor(Math.random() * tileCount);
+            apple.y = Math.floor(Math.random() * tileCount);
         }
 
-        document.getElementById('nextTurn').addEventListener('click', nextTurn);
+        function resetGame() {
+            snake = [{x: 10, y: 10}];
+            direction = {x: 1, y: 0};
+            score = 0;
+            placeApple();
+        }
 
-        // Начальная отрисовка игры
-        drawGame();
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            moveSnake();
+
+            // Рисуем змейку
+            for (let part of snake) {
+                drawTile(part.x, part.y, 'lime');
+            }
+
+            // Рисуем яблоко
+            drawTile(apple.x, apple.y, 'red');
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowUp' && direction.y === 0) {
+                direction = {x: 0, y: -1};
+            } else if (event.key === 'ArrowDown' && direction.y === 0) {
+                direction = {x: 0, y: 1};
+            } else if (event.key === 'ArrowLeft' && direction.x === 0) {
+                direction = {x: -1, y: 0};
+            } else if (event.key === 'ArrowRight' && direction.x === 0) {
+                direction = {x: 1, y: 0};
+            }
+        });
+
+        placeApple();
+        gameLoop();
     </script>
 </body>
 </html>
