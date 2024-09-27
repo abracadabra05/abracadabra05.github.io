@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vedia - A Very Difficult Adventure (No Images)</title>
+    <title>Начало игры</title>
     <style>
         body {
             margin: 0;
@@ -25,91 +25,69 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        const TILE_SIZE = 32;
-        const MAP_WIDTH = 25;
-        const MAP_HEIGHT = 19;
+        let noiseInterval;
+        let brightness = 0;
+        let flashInterval;
+        let showWhiteScreen = false;
 
-        // Простая карта (0 - пустое место, 1 - стена, 2 - NPC, 3 - предмет)
-        const map = [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1],
-            [1,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,1,0,1],
-            [1,0,1,0,1,1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1],
-            [1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1],
-            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-            [1,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-        ];
+        // Функция для генерации шума
+        function generateNoise() {
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            for (let i = 0; i < imageData.data.length; i += 4) {
+                const randomColor = Math.random() * 255;
+                imageData.data[i] = randomColor;    // Красный
+                imageData.data[i + 1] = randomColor;  // Зеленый
+                imageData.data[i + 2] = randomColor;  // Синий
+                imageData.data[i + 3] = 255;      // Прозрачность
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
 
-        const player = {
-            x: 1,
-            y: 1
-        };
-
-        function drawMap() {
-            for (let y = 0; y < MAP_HEIGHT; y++) {
-                for (let x = 0; x < MAP_WIDTH; x++) {
-                    const tile = map[y][x];
-                    if (tile === 1) {
-                        ctx.fillStyle = 'gray';
-                    } else if (tile === 2) {
-                        ctx.fillStyle = 'blue';
-                    } else if (tile === 3) {
-                        ctx.fillStyle = 'yellow';
-                    } else {
-                        ctx.fillStyle = 'green';
-                    }
-                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-                }
+        // Функция для создания белых вспышек
+        function flashWhite() {
+            brightness += 0.05;
+            ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (brightness >= 1) {
+                clearInterval(flashInterval);
+                setTimeout(showFinalWhiteScreen, 500); // Короткая задержка перед белым экраном
             }
         }
 
-        function drawPlayer() {
-            ctx.fillStyle = 'red';
-            ctx.fillRect(player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        // Показ полностью белого экрана, после которого начинается игра
+        function showFinalWhiteScreen() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            setTimeout(() => {
+                showWhiteScreen = true;
+                startGame();  // Здесь начнется сама игра после белого экрана
+            }, 1000);  // Задержка 1 секунда перед началом игры
         }
 
-        function update() {
-            console.log("Updating game state");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawMap();
-            drawPlayer();
+        // Запуск сцены с шумом и вспышками
+        function startScene() {
+            noiseInterval = setInterval(generateNoise, 50); // Генерация шума каждые 50 мс
+            
+            setTimeout(() => {
+                clearInterval(noiseInterval); // Остановить шум
+                flashInterval = setInterval(flashWhite, 100); // Запуск белых вспышек
+            }, 3000);  // Шум продолжается 3 секунды
         }
 
-        function movePlayer(dx, dy) {
-            const newX = player.x + dx;
-            const newY = player.y + dy;
-            if (newX >= 0 && newX < MAP_WIDTH && newY >= 0 && newY < MAP_HEIGHT && map[newY][newX] === 0) {
-                player.x = newX;
-                player.y = newY;
-                console.log(`Player moved to (${player.x}, ${player.y})`);
+        // Функция запуска самой игры (начало на небесном острове)
+        function startGame() {
+            if (showWhiteScreen) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Очищаем экран
+                ctx.fillStyle = 'lightblue';
+                ctx.fillRect(0, 0, canvas.width, canvas.height); // Заливаем небесным цветом
+                // Здесь ты можешь добавить рендеринг персонажа и остальной игровой сцены
+                console.log('Game started');
             }
         }
 
-        document.addEventListener('keydown', (e) => {
-            console.log("Key pressed:", e.key);
-            switch(e.key) {
-                case 'ArrowUp': movePlayer(0, -1); break;
-                case 'ArrowDown': movePlayer(0, 1); break;
-                case 'ArrowLeft': movePlayer(-1, 0); break;
-                case 'ArrowRight': movePlayer(1, 0); break;
-            }
-            update();
-        });
-
-        console.log("Game initialized");
-        update();
+        // Инициализация
+        startScene(); // Запуск сцены с шумом и засветлениями
     </script>
 </body>
 </html>
