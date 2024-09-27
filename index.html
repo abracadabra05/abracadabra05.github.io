@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vedia - A Very Difficult Adventure</title>
+    <title>Vedia - A Very Difficult Adventure (Debug)</title>
     <style>
         body {
             margin: 0;
@@ -28,13 +28,6 @@
         const TILE_SIZE = 32;
         const MAP_WIDTH = 25;
         const MAP_HEIGHT = 19;
-
-        // Загрузка изображений
-        const playerImage = new Image();
-        playerImage.src = 'https://example.com/player-sprite.png'; // Замените на реальный URL
-
-        const tilesetImage = new Image();
-        tilesetImage.src = 'https://example.com/tileset.png'; // Замените на реальный URL
 
         // Простая карта (0 - пустое место, 1 - стена, 2 - NPC, 3 - предмет)
         const map = [
@@ -69,23 +62,26 @@
                 for (let x = 0; x < MAP_WIDTH; x++) {
                     const tile = map[y][x];
                     if (tile === 1) {
-                        ctx.drawImage(tilesetImage, 0, 0, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.fillStyle = 'gray';
                     } else if (tile === 2) {
-                        ctx.drawImage(tilesetImage, TILE_SIZE, 0, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.fillStyle = 'blue';
                     } else if (tile === 3) {
-                        ctx.drawImage(tilesetImage, TILE_SIZE * 2, 0, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.fillStyle = 'yellow';
                     } else {
-                        ctx.drawImage(tilesetImage, TILE_SIZE * 3, 0, TILE_SIZE, TILE_SIZE, x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+                        ctx.fillStyle = 'green';
                     }
+                    ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
                 }
             }
         }
 
         function drawPlayer() {
-            ctx.drawImage(playerImage, player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = 'red';
+            ctx.fillRect(player.x * TILE_SIZE, player.y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         }
 
         function update() {
+            console.log("Updating game state");
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawMap();
             drawPlayer();
@@ -97,10 +93,12 @@
             if (newX >= 0 && newX < MAP_WIDTH && newY >= 0 && newY < MAP_HEIGHT && map[newY][newX] === 0) {
                 player.x = newX;
                 player.y = newY;
+                console.log(`Player moved to (${player.x}, ${player.y})`);
             }
         }
 
         document.addEventListener('keydown', (e) => {
+            console.log("Key pressed:", e.key);
             switch(e.key) {
                 case 'ArrowUp': movePlayer(0, -1); break;
                 case 'ArrowDown': movePlayer(0, 1); break;
@@ -110,13 +108,8 @@
             update();
         });
 
-        // Ждем загрузки изображений перед началом игры
-        Promise.all([
-            new Promise(resolve => playerImage.onload = resolve),
-            new Promise(resolve => tilesetImage.onload = resolve)
-        ]).then(() => {
-            update();
-        });
+        console.log("Game initialized");
+        update();
     </script>
 </body>
 </html>
