@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Начало игры</title>
+    <title>Заставка</title>
     <style>
         body {
             margin: 0;
@@ -19,12 +19,16 @@
         #gameCanvas {
             border: 1px solid #333;
         }
-        #interactionText {
+        #logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             color: white;
-            font-size: 1.5rem;
-            margin-top: 10px;
+            font-size: 3rem;
+            font-family: 'Arial', sans-serif;
             text-align: center;
-            cursor: pointer;
+            display: none;
         }
         .centered {
             position: absolute;
@@ -48,10 +52,7 @@
 </head>
 <body>
     <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="interactionText">...</div>
-    <div id="form" class="centered">
-        <div class="eyes"></div>
-    </div>
+    <div id="logo">ЛОГОТИП ИГРЫ</div> <!-- Добавляем логотип вместо текста -->
     
     <audio id="backgroundNoise" src="your-noise.mp3" preload="auto"></audio> <!-- Фоновой шум -->
     <audio id="sfxFlash" src="flash-sound.mp3" preload="auto"></audio> <!-- Звук вспышки -->
@@ -59,16 +60,17 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        const interactionText = document.getElementById('interactionText');
-        const form = document.getElementById('form');
+        const logo = document.getElementById('logo');
         const noiseAudio = document.getElementById('backgroundNoise');
         const flashAudio = document.getElementById('sfxFlash');
         
         let noiseInterval;
         let brightness = 0;
         let flashInterval;
-        let showWhiteScreen = false;
-        let step = 0;
+
+        // Уменьшаем громкость звуков
+        noiseAudio.volume = 0.3;
+        flashAudio.volume = 0.5;
 
         // Функция для генерации шума
         function generateNoise() {
@@ -95,32 +97,15 @@
             }
         }
 
-        // Показ полностью белого экрана, после которого начинается взаимодействие
+        // Показ полностью белого экрана, после которого появляется логотип
         function showFinalWhiteScreen() {
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             flashAudio.play();
             setTimeout(() => {
-                interactionText.style.display = 'block';
-            }, 2000);  // Появление текста через 2 секунды
+                logo.style.display = 'block'; // Появление логотипа
+            }, 2000);  // Логотип через 2 секунды
         }
-
-        // Обработка нажатий на текст
-        interactionText.addEventListener('click', () => {
-            if (step === 0) {
-                interactionText.innerHTML = '...'; // Первый клик - просто точки
-                step++;
-            } else if (step === 1) {
-                interactionText.style.display = 'none';
-                form.style.display = 'block';  // Показываем форму
-                setTimeout(() => {
-                    form.querySelector('.eyes').classList.add('glowing');
-                    setTimeout(() => {
-                        canvas.style.background = 'black'; // Затемнение экрана через секунду
-                    }, 1000);
-                }, 1000);  // Глаза загораются через секунду
-            }
-        });
 
         // Запуск сцены с шумом и вспышками
         function startScene() {
@@ -149,6 +134,8 @@
 
             canvas.style.width = newWidth + 'px';
             canvas.style.height = newHeight + 'px';
+            canvas.width = newWidth;
+            canvas.height = newHeight;
         }
 
         window.addEventListener('resize', resizeCanvas);
